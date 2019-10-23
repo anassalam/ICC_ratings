@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import json
+import requests
+from bs4 import BeautifulSoup
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
+
+# In[2]:
+
+
+cricket = []
+
+with open('CricketTeams.txt', 'r') as file:
+    
+    for line in file:
+        x = line.strip()
+        url = 'http://www.espncricinfo.com/' + x.split(',')[0] + '/content/player/country.html?country=' + x.split(',')[1]
+        print(url)
+        
+        html = requests.get(url)
+        soup = BeautifulSoup(html.content, 'html.parser')
+        
+        #List of all the players including ODI, Test, T20
+        rawPlayers = soup.find_all('td', class_="divider")
+        
+        #To get the list of unique players
+        playerSet = set([])
+        
+        #Adding all players (ODI, Test, T20) to set
+        for child in rawPlayers:
+            playerSet.add(child.text)
+        
+        #Convert above set into list
+        listPlayers = []
+        for player in playerSet:
+            listPlayers.append(player)
+        
+        team = []
+        team.append(x.split(',')[0])
+        team.append(listPlayers)
+        #print(team)
+        
+        cricket.append(team)
+        
+    print(cricket)
+    
+with open('cricketTeams.json', 'w', encoding='utf-8') as file:
+    json.dump(cricket, file, ensure_ascii=False, indent=2)
+
+
+# In[3]:
+
+
+x_name_of_team = []
+for i in range(0, len(cricket)):
+    x_name_of_team.append(cricket[i][0])
+print(x_name_of_team)
+
+y_number_of_players = []
+for i in range(0, len(cricket)):
+    y_number_of_players.append(len(cricket[i][1]))
+print(y_number_of_players)
+
+#in order to check if number of teams on index [0] matches with their players in index [1]
+print(len(x_name_of_team))
+print(len(y_number_of_players))
+
+
+# In[4]:
+
+
+plt.bar(x_name_of_team, y_number_of_players, width=.5)
+
+#rotate labels at x-axis
+plt.xticks(x_name_of_team, x_name_of_team, rotation='vertical')
+
+avg = np.mean(y_number_of_players)
+plt.plot(x_name_of_team, [avg] * len(y_number_of_players), color='red', lw=1, ls='--')
+
+plt.legend(['avg no. of players'])
+
+#plt.show() #for normal default size
+plt.tight_layout() # for compact size
+
+#save figure
+plt.savefig('myfig.png', dpi=300)
+#plt.savefig('figeps.eps', format='eps', dpi=300)
+
+
+
